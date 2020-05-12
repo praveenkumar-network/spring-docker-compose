@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Built-By: praveen.kumar
+Build-Jdk: 11.0.3
+Implementation-Title: spring-docker-compose
+Implementation-Version: 0.0.1-SNAPSHOT
+Implementation-Vendor-Id: com.praveen
+Implementation-Vendor: Pivotal Software, Inc.
+Implementation-URL: http://projects.spring.io/spring-boot/spring-docker-
+ compose/
+Created-By: Maven Integration for Eclipse
+
