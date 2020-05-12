@@ -1,0 +1,12 @@
+version: "3.3"
+services: 
+  producer:
+    image: spring-docker-compose
+    ports:
+      - "8089:8089"
+    networks:
+      - mynetwork
+
+
+networks:
+  mynetwork:
