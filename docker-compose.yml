@@ -2,6 +2,7 @@ version: "3.3"
 services: 
   producer:
     image: spring-docker-compose
+    container_name: spring-docker-compose
     ports:
       - "8089:8089"
     networks:
