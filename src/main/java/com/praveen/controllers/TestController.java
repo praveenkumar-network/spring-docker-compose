@@ -17,6 +17,7 @@ public class TestController {
 		emp.setDesignation("manager");
 		emp.setEmpId("1");
 		emp.setSalary(3000);
+		System.out.println("Object details : "+emp.toString());
 
 		return emp;
 	}
