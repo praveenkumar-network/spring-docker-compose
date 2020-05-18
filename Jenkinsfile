@@ -1,24 +1,60 @@
 node {
- 		String buildTimeStamp="${BUILD_TIMESTAMP}"
-		String[] buildTimeStampArray;
-		buildTimeStampArray=buildTimeStamp.split(' ');
-	  
-		String dateString=buildTimeStampArray[0].toString();
-		String[] dateArray;	
-		dateArray=dateString.split('-'); 
-		String dateResult=""; 
-		for( String value : dateArray ){
-		dateResult=dateResult+value;
-		}			  
-		String timeString=buildTimeStampArray[1].toString();
-		String[] timeArray;	
-		timeArray=timeString.split(':');  
-		String timeResult=""; 
-		for( String value : timeArray ){
-		timeResult=timeResult+value;
+ 		String tag;
+   try{
+			  
+			  containerStatus=	bat(returnStdout:true , script: "docker inspect -f '{{.Config.Image}}' spring-docker-compose")
+			  println(containerStatus);
+			  containerStatusResult = containerStatus.readLines().drop(2).join(" ") 
+			  containerStatusResult = containerStatusResult.replaceAll("'", "");
+			  String[] tagArray;
+			  tagArray=containerStatusResult.split(':');
+			  tag=tagArray[2].toString();				
+				
+		String inputTag=tag;
+		String[] inputTagArray=inputTag.split('\\.');
+		int majorVersion=Integer.parseInt(inputTagArray[0]);
+		int minorVersion=Integer.parseInt(inputTagArray[1]);
+		int patchVersion=Integer.parseInt(inputTagArray[2]);
+		String patchVersionString,minorVersionString=null;
+		for(int i=0;i<=9;i++) {
+			if(patchVersion==i) {
+				patchVersion++;
+				break;
+			}
 		}
-		String tag=dateResult+timeResult;
-		 println(tag);
+		if(patchVersion==10) {
+		patchVersionString = String.valueOf(patchVersion);
+		patchVersion=Integer.parseInt(Character.toString(patchVersionString.charAt(1)));
+		println("patchVersion "+patchVersion);
+		minorVersion++;
+		if(minorVersion==10) {
+			minorVersionString = String.valueOf(minorVersion);
+			minorVersion=Integer.parseInt(Character.toString(minorVersionString.charAt(1)));
+			println("minorVersion "+minorVersion);
+			majorVersion++;
+			println("majorVersion "+majorVersion);
+			
+			}
+		}
+		println("tag is created sucessfully  "+Integer.toString(majorVersion)+"."+Integer.toString(minorVersion)+"."+Integer.toString(patchVersion));
+		tag=Integer.toString(majorVersion)+"."+Integer.toString(minorVersion)+"."+Integer.toString(patchVersion);
+		script {
+                    env.tag = tag
+                }
+
+			  
+	  }
+		 catch(err)
+	  {
+			println(err);
+			tag="1.0.0"
+			println("default tag   "+tag);
+			script {
+                    env.tag = tag
+                }
+			
+	  }	 
+	  
    stage('SCM Login  AND Checkout') {
       git credentialsId: 'c499039f-d083-49c0-ad02-8753e3f58f5b', poll: false, url: 'https://github.com/praveenkumar-network/spring-docker-compose.git/'
    }
@@ -28,7 +64,7 @@ node {
    bat "${gradleCMD}  clean install"
    }
     stage('Build Docker Image') {
-      bat "docker build -t art.local:5001/spring-docker-compose ."
+      bat "docker build -t art.local:5001/spring-docker-compose:${tag} ."
    }
    stage('Login Artifactory And Push Image') {
 	withCredentials([string(credentialsId: 'artifactory-pwd', variable: 'artifactoryPwd')]) {
@@ -36,7 +72,7 @@ node {
 	 bat "docker push art.local:5001/spring-docker-compose"
 	} 
    }
-   stage('Stop Runing Container') {
+    stage('Stop Runing Container') {
 	  try{
 			  
 			  containerStatus=	bat(returnStdout:true , script: "docker inspect -f '{{.State.Running}}' spring-docker-compose")
@@ -71,7 +107,11 @@ node {
 				println(err);
 			}
    }
-   stage('Deloy image and Run Container') {
+    stage('Deloy image and Run Container') {
+	echo "Run Container with tag = ${env.tag}"
       bat "docker-compose up -d"
    }
+  
+ 
+
 }
